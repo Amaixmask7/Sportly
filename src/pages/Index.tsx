@@ -28,11 +28,16 @@ interface Invitation {
 
 const Index = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [participantCounts, setParticipantCounts] = useState<Record<string, number>>({});
+  const [joinedMap, setJoinedMap] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
 
   useEffect(() => {
     fetchInvitations();
+    if (user) {
+      fetchParticipation();
+    }
     
     // Set up real-time subscription
     const channel = supabase
@@ -50,10 +55,27 @@ const Index = () => {
       )
       .subscribe();
 
+    const participantChannel = supabase
+      .channel('participants-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'InvitationParticipant'
+        },
+        () => {
+          fetchParticipantCounts();
+          if (user) fetchParticipation();
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(participantChannel);
     };
-  }, []);
+  }, [user]);
 
   const fetchInvitations = async () => {
     try {
@@ -74,6 +96,46 @@ const Index = () => {
       console.error('Error fetching invitations:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchParticipantCounts = async () => {
+    try {
+      const ids = invitations.map(i => i.id);
+      if (ids.length === 0) return;
+      const { data, error } = await supabase
+        .from('InvitationParticipant')
+        .select('invitation_id')
+        .in('invitation_id', ids);
+      if (error) throw error;
+      const counts: Record<string, number> = {};
+      data?.forEach(row => {
+        counts[row.invitation_id] = (counts[row.invitation_id] || 0) + 1;
+      });
+      setParticipantCounts(counts);
+    } catch (error) {
+      // ignore silently
+    }
+  };
+
+  const fetchParticipation = async () => {
+    if (!user) return;
+    try {
+      const ids = invitations.map(i => i.id);
+      if (ids.length === 0) return;
+      const { data, error } = await supabase
+        .from('InvitationParticipant')
+        .select('invitation_id')
+        .eq('user_id', user.id)
+        .in('invitation_id', ids);
+      if (error) throw error;
+      const map: Record<string, boolean> = {};
+      data?.forEach(row => {
+        map[row.invitation_id] = true;
+      });
+      setJoinedMap(map);
+    } catch (error) {
+      // ignore silently
     }
   };
 
@@ -132,6 +194,26 @@ const Index = () => {
         title: 'Berhasil bergabung',
         description: 'Selamat! Anda telah bergabung pada ajakan ini.',
       });
+      fetchParticipantCounts();
+      fetchParticipation();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Terjadi kesalahan tak terduga';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    }
+  };
+
+  const handleLeave = async (invitationId: string) => {
+    if (!user) return;
+    try {
+      const { error } = await supabase
+        .from('InvitationParticipant')
+        .delete()
+        .eq('invitation_id', invitationId)
+        .eq('user_id', user.id);
+      if (error) throw error;
+      toast({ title: 'Keluar', description: 'Anda telah keluar dari ajakan ini.' });
+      fetchParticipantCounts();
+      fetchParticipation();
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Terjadi kesalahan tak terduga';
       toast({ title: 'Error', description: message, variant: 'destructive' });
@@ -208,6 +290,9 @@ const Index = () => {
                     key={invitation.id}
                     invitation={invitation}
                     onJoin={handleJoin}
+                    onLeave={handleLeave}
+                    participantCount={participantCounts[invitation.id] || 0}
+                    isJoined={joinedMap[invitation.id] || false}
                   />
                 ))}
               </div>

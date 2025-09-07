@@ -21,7 +21,10 @@ interface SportCardProps {
       display_name: string;
     };
   };
+  participantCount?: number;
+  isJoined?: boolean;
   onJoin: (id: string) => void;
+  onLeave?: (id: string) => void;
 }
 
 const getSportColor = (slug: string) => {
@@ -35,7 +38,7 @@ const getSportColor = (slug: string) => {
   return colors[slug as keyof typeof colors] || 'bg-primary text-primary-foreground';
 };
 
-export const SportCard = ({ invitation, onJoin }: SportCardProps) => {
+export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, isJoined = false }: SportCardProps) => {
   const startTime = new Date(invitation.start_at);
   const endTime = new Date(startTime.getTime() + (invitation.duration * 60 * 60 * 1000));
 
@@ -73,7 +76,7 @@ export const SportCard = ({ invitation, onJoin }: SportCardProps) => {
         
         <div className="flex items-center gap-2 text-sm">
           <Users className="h-4 w-4 text-muted-foreground" />
-          <span>Max {invitation.capacity} orang</span>
+          <span>{participantCount}/{invitation.capacity} orang</span>
         </div>
         
         {invitation.note && (
@@ -82,13 +85,23 @@ export const SportCard = ({ invitation, onJoin }: SportCardProps) => {
           </div>
         )}
         
-        <Button 
-          onClick={() => onJoin(invitation.id)} 
-          className="w-full mt-4"
-          variant="default"
-        >
-          Gabung Olahraga
-        </Button>
+        {isJoined ? (
+          <Button 
+            onClick={() => onLeave && onLeave(invitation.id)} 
+            className="w-full mt-4"
+            variant="outline"
+          >
+            Keluar
+          </Button>
+        ) : (
+          <Button 
+            onClick={() => onJoin(invitation.id)} 
+            className="w-full mt-4"
+            variant="default"
+          >
+            Gabung Olahraga
+          </Button>
+        )}
       </CardContent>
     </Card>
   );
