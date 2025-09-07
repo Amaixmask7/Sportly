@@ -34,6 +34,12 @@ npm i
 
 # Step 4: Start the development server with auto-reloading and an instant preview.
 npm run dev
+
+# ENV setup (required)
+# Create .env in project root with your Supabase project credentials
+# Example:
+# VITE_SUPABASE_URL=your-url
+# VITE_SUPABASE_ANON_KEY=your-anon-key
 ```
 
 **Edit a file directly in GitHub**
