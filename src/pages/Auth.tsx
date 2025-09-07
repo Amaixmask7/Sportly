@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/useAuth';
+import { FcGoogle } from 'react-icons/fc';
 
 const Auth = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -13,7 +14,7 @@ const Auth = () => {
   const [displayName, setDisplayName] = useState('');
   const [loading, setLoading] = useState(false);
   
-  const { signUp, signIn, user } = useAuth();
+  const { signUp, signIn, signInWithGoogle, user } = useAuth();
 
   // Redirect if already authenticated
   if (user) {
@@ -85,6 +86,12 @@ const Auth = () => {
               {loading ? 'Loading...' : (isSignUp ? 'Daftar' : 'Masuk')}
             </Button>
           </form>
+          <div className="mt-4">
+            <Button variant="outline" className="w-full flex items-center gap-2" onClick={() => signInWithGoogle()}>
+              <FcGoogle className="h-5 w-5" />
+              Masuk dengan Google
+            </Button>
+          </div>
           
           <div className="mt-4 text-center">
             <Button
