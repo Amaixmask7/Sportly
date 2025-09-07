@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateInvitationForm } from '@/components/CreateInvitationForm';
@@ -30,11 +30,6 @@ const Index = () => {
   const [invitations, setInvitations] = useState<Invitation[]>([]);
   const [loading, setLoading] = useState(true);
   const { user, signOut } = useAuth();
-
-  // Redirect to auth if not logged in
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
 
   useEffect(() => {
     fetchInvitations();
@@ -100,13 +95,21 @@ const Index = () => {
               <p className="text-muted-foreground">Cari teman olahraga di dekatmu</p>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                Halo, {user.user_metadata?.display_name || user.email}
-              </span>
-              <Button variant="outline" size="sm" onClick={signOut}>
-                <LogOut className="h-4 w-4 mr-2" />
-                Keluar
-              </Button>
+              {user ? (
+                <>
+                  <span className="text-sm text-muted-foreground">
+                    Halo, {user.user_metadata?.display_name || user.email}
+                  </span>
+                  <Button variant="outline" size="sm" onClick={signOut}>
+                    <LogOut className="h-4 w-4 mr-2" />
+                    Keluar
+                  </Button>
+                </>
+              ) : (
+                <Button asChild size="sm">
+                  <Link to="/auth">Masuk / Daftar</Link>
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -120,7 +123,7 @@ const Index = () => {
               <Users className="h-4 w-4" />
               Feed Ajakan
             </TabsTrigger>
-            <TabsTrigger value="create" className="flex items-center gap-2">
+            <TabsTrigger value="create" className="flex items-center gap-2" disabled={!user}>
               <Plus className="h-4 w-4" />
               Buat Ajakan
             </TabsTrigger>
@@ -159,7 +162,16 @@ const Index = () => {
 
           <TabsContent value="create">
             <div className="max-w-2xl mx-auto">
-              <CreateInvitationForm onSuccess={() => fetchInvitations()} />
+              {user ? (
+                <CreateInvitationForm onSuccess={() => fetchInvitations()} />
+              ) : (
+                <div className="p-6 border rounded-md bg-muted/30 text-center space-y-4">
+                  <p className="text-sm text-muted-foreground">Anda perlu masuk untuk membuat ajakan.</p>
+                  <Button asChild>
+                    <Link to="/auth">Masuk / Daftar</Link>
+                  </Button>
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
