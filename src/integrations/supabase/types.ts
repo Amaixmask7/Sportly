@@ -92,6 +92,42 @@ export type Database = {
           },
         ]
       }
+      InvitationParticipant: {
+        Row: {
+          id: string
+          invitation_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          invitation_id: string
+          user_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          invitation_id?: string
+          user_id?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "InvitationParticipant_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "Invitation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "InvitationParticipant_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "Customer"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       Sports: {
         Row: {
           created_at: string

@@ -78,10 +78,64 @@ const Index = () => {
   };
 
   const handleJoin = async (invitationId: string) => {
-    toast({
-      title: "Tertarik bergabung?",
-      description: "Fitur bergabung akan segera hadir! Sementara hubungi penyelenggara langsung.",
-    });
+    if (!user) {
+      toast({
+        title: "Butuh login",
+        description: "Silakan masuk terlebih dahulu sebelum bergabung.",
+      });
+      return;
+    }
+
+    try {
+      const currentInvitation = invitations.find((i) => i.id === invitationId);
+      const capacity = currentInvitation?.capacity ?? 0;
+
+      // Cek apakah sudah join
+      const { data: existing, error: existingError } = await supabase
+        .from('InvitationParticipant')
+        .select('id')
+        .eq('invitation_id', invitationId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingError && existingError.code !== 'PGRST116') throw existingError;
+      if (existing) {
+        toast({
+          title: 'Sudah bergabung',
+          description: 'Anda sudah terdaftar pada ajakan ini.',
+        });
+        return;
+      }
+
+      // Cek kapasitas
+      const { count, error: countError } = await supabase
+        .from('InvitationParticipant')
+        .select('id', { count: 'exact', head: true })
+        .eq('invitation_id', invitationId);
+      if (countError) throw countError;
+      if (typeof count === 'number' && capacity > 0 && count >= capacity) {
+        toast({
+          title: 'Penuh',
+          description: 'Kapasitas ajakan ini sudah penuh.',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      // Insert participant
+      const { error: insertError } = await supabase
+        .from('InvitationParticipant')
+        .insert({ invitation_id: invitationId, user_id: user.id });
+      if (insertError) throw insertError;
+
+      toast({
+        title: 'Berhasil bergabung',
+        description: 'Selamat! Anda telah bergabung pada ajakan ini.',
+      });
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Terjadi kesalahan tak terduga';
+      toast({ title: 'Error', description: message, variant: 'destructive' });
+    }
   };
 
   return (
