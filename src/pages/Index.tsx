@@ -1,12 +1,169 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState, useEffect } from 'react';
+import { Navigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { CreateInvitationForm } from '@/components/CreateInvitationForm';
+import { SportCard } from '@/components/SportCard';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+import { LogOut, Plus, Users } from 'lucide-react';
+
+interface Invitation {
+  id: string;
+  sport_id: string;
+  venue: string;
+  start_at: string;
+  duration: number;
+  capacity: number;
+  note?: string;
+  Sports?: {
+    Sport_name: string;
+    Slug: string;
+  };
+  Customer?: {
+    display_name: string;
+  };
+}
 
 const Index = () => {
+  const [invitations, setInvitations] = useState<Invitation[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user, signOut } = useAuth();
+
+  // Redirect to auth if not logged in
+  if (!user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  useEffect(() => {
+    fetchInvitations();
+    
+    // Set up real-time subscription
+    const channel = supabase
+      .channel('invitations-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'Invitation'
+        },
+        () => {
+          fetchInvitations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchInvitations = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('Invitation')
+        .select(`
+          *,
+          Sports (Sport_name, Slug),
+          Customer (display_name)
+        `)
+        .eq('is_canceled', false)
+        .gte('start_at', new Date().toISOString())
+        .order('start_at', { ascending: true });
+
+      if (error) throw error;
+      setInvitations(data || []);
+    } catch (error) {
+      console.error('Error fetching invitations:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoin = async (invitationId: string) => {
+    toast({
+      title: "Tertarik bergabung?",
+      description: "Fitur bergabung akan segera hadir! Sementara hubungi penyelenggara langsung.",
+    });
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-primary">Sportly</h1>
+              <p className="text-muted-foreground">Cari teman olahraga di dekatmu</p>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-muted-foreground">
+                Halo, {user.user_metadata?.display_name || user.email}
+              </span>
+              <Button variant="outline" size="sm" onClick={signOut}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Keluar
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        <Tabs defaultValue="feed" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="feed" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Feed Ajakan
+            </TabsTrigger>
+            <TabsTrigger value="create" className="flex items-center gap-2">
+              <Plus className="h-4 w-4" />
+              Buat Ajakan
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="feed" className="space-y-6">
+            <div className="text-center">
+              <h2 className="text-2xl font-semibold mb-2">Temukan Partner Olahraga</h2>
+              <p className="text-muted-foreground">
+                Bergabunglah dengan ajakan olahraga di sekitarmu atau buat ajakan baru
+              </p>
+            </div>
+
+            {loading ? (
+              <div className="text-center py-12">
+                <p>Memuat ajakan olahraga...</p>
+              </div>
+            ) : invitations.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">
+                  Belum ada ajakan olahraga. Jadilah yang pertama membuat ajakan!
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {invitations.map((invitation) => (
+                  <SportCard
+                    key={invitation.id}
+                    invitation={invitation}
+                    onJoin={handleJoin}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          <TabsContent value="create">
+            <div className="max-w-2xl mx-auto">
+              <CreateInvitationForm onSuccess={() => fetchInvitations()} />
+            </div>
+          </TabsContent>
+        </Tabs>
+      </main>
     </div>
   );
 };
