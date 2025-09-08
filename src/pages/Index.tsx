@@ -2,15 +2,29 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateInvitationForm } from '@/components/CreateInvitationForm';
-import { SportCard } from '@/components/SportCard';
+import { OptimizedSportCard } from '@/components/OptimizedSportCard';
+import { SearchAndFilter } from '@/components/SearchAndFilter';
+import { SkeletonCardGrid } from '@/components/SkeletonCard';
 import { useAuth } from '@/hooks/useAuth';
-import { useInvitations } from '@/hooks/useInvitations';
+import { useInvitationFilters } from '@/hooks/useInvitationFilters';
 import { useParticipantCounts, useUserParticipation, useJoinInvitation, useLeaveInvitation } from '@/hooks/useParticipants';
 import { LogOut, Plus, Users } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut } = useAuth();
-  const { data: invitations = [], isLoading, error } = useInvitations();
+  const {
+    invitations,
+    isLoading,
+    error,
+    searchQuery,
+    selectedSport,
+    selectedDateRange,
+    setSearchQuery,
+    setSelectedSport,
+    setSelectedDateRange,
+    clearFilters
+  } = useInvitationFilters();
+  
   const joinInvitation = useJoinInvitation();
   const leaveInvitation = useLeaveInvitation();
   
@@ -90,10 +104,19 @@ const Index = () => {
               </p>
             </div>
 
+            {/* Search and Filter */}
+            <SearchAndFilter
+              onSearch={setSearchQuery}
+              onFilterSport={setSelectedSport}
+              onFilterDate={setSelectedDateRange}
+              onClearFilters={clearFilters}
+              searchQuery={searchQuery}
+              selectedSport={selectedSport}
+              selectedDateRange={selectedDateRange}
+            />
+
             {isLoading ? (
-              <div className="text-center py-12">
-                <p>Memuat ajakan olahraga...</p>
-              </div>
+              <SkeletonCardGrid count={6} />
             ) : error ? (
               <div className="text-center py-12">
                 <p className="text-red-500">Error memuat data: {error.message}</p>
@@ -101,19 +124,23 @@ const Index = () => {
             ) : invitations.length === 0 ? (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">
-                  Belum ada ajakan olahraga. Jadilah yang pertama membuat ajakan!
+                  {searchQuery || selectedSport !== 'all' || selectedDateRange !== 'all' 
+                    ? 'Tidak ada ajakan yang sesuai dengan filter Anda.' 
+                    : 'Belum ada ajakan olahraga. Jadilah yang pertama membuat ajakan!'
+                  }
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {invitations.map((invitation) => (
-                  <SportCard
+                  <OptimizedSportCard
                     key={invitation.id}
                     invitation={invitation}
                     onJoin={(id) => handleJoin(id, invitation.capacity)}
                     onLeave={handleLeave}
                     currentParticipants={participantCounts[invitation.id] || 0}
                     isJoined={joinedMap[invitation.id] || false}
+                    user={user}
                   />
                 ))}
               </div>
@@ -123,7 +150,11 @@ const Index = () => {
           <TabsContent value="create">
             <div className="max-w-2xl mx-auto">
               {user ? (
-                <CreateInvitationForm onSuccess={() => fetchInvitations()} />
+                <CreateInvitationForm onSuccess={() => {
+                  // Switch to feed tab after successful creation
+                  const feedTab = document.querySelector('[value="feed"]') as HTMLElement;
+                  if (feedTab) feedTab.click();
+                }} />
               ) : (
                 <div className="p-6 border rounded-md bg-muted/30 text-center space-y-4">
                   <p className="text-sm text-muted-foreground">Anda perlu masuk untuk membuat ajakan.</p>
