@@ -6,15 +6,6 @@ INSERT INTO public."Sports" ("Sport_name", "Slug", "Description", "Min_participa
 ('Sepakbola', 'sepakbola', 'Football/soccer played with 11 players per team', 10, 22, true),
 ('Tenis', 'tenis', 'Racquet sport played on a court', 2, 4, true);
 
--- Add foreign key constraints that were missing
-ALTER TABLE public."Invitation" 
-ADD CONSTRAINT invitation_owner_id_fkey 
-FOREIGN KEY (owner_id) REFERENCES public."Customer"(id) ON DELETE CASCADE;
-
-ALTER TABLE public."Invitation" 
-ADD CONSTRAINT invitation_sport_id_fkey 
-FOREIGN KEY (sport_id) REFERENCES public."Sports"(id) ON DELETE CASCADE;
-
 -- Enable Row Level Security on all tables
 ALTER TABLE public."Customer" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public."Invitation" ENABLE ROW LEVEL SECURITY; 
