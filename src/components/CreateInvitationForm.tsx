@@ -57,6 +57,35 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
     e.preventDefault();
     if (!user) return;
     
+    // Validations
+    if (!formData.sport_id) {
+      toast({ title: 'Validasi', description: 'Pilih jenis olahraga.', variant: 'destructive' });
+      return;
+    }
+    if (!formData.venue.trim()) {
+      toast({ title: 'Validasi', description: 'Lokasi/Venue wajib diisi.', variant: 'destructive' });
+      return;
+    }
+    const startDate = new Date(formData.start_at);
+    const now = new Date();
+    if (isNaN(startDate.getTime()) || startDate <= now) {
+      toast({ title: 'Validasi', description: 'Tanggal & jam harus di masa depan.', variant: 'destructive' });
+      return;
+    }
+    if (formData.duration <= 0) {
+      toast({ title: 'Validasi', description: 'Durasi harus lebih dari 0.', variant: 'destructive' });
+      return;
+    }
+    const selected = sports.find(s => s.id === formData.sport_id);
+    if (selected) {
+      const min = selected.Min_participants || 1;
+      const max = selected.Max_participants || 100;
+      if (formData.capacity < min || formData.capacity > max) {
+        toast({ title: 'Validasi', description: `Jumlah partisipan harus antara ${min}-${max}.`, variant: 'destructive' });
+        return;
+      }
+    }
+
     setLoading(true);
     
     try {
@@ -65,7 +94,7 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
         .insert({
           ...formData,
           owner_id: user.id,
-          start_at: new Date(formData.start_at).toISOString(),
+          start_at: startDate.toISOString(),
         });
 
       if (error) throw error;
