@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -9,6 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 import { useAuth } from '@/hooks/useAuth';
 import { useSports } from '@/hooks/useSports';
 import { useCreateInvitation } from '@/hooks/useInvitations';
+import { MapPicker } from './MapPicker';
 import { createInvitationSchema, type CreateInvitationInput } from '@/schemas/invitation';
 
 interface CreateInvitationFormProps {
@@ -19,6 +21,7 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
   const { user } = useAuth();
   const { data: sports = [], isLoading: sportsLoading } = useSports();
   const createInvitation = useCreateInvitation();
+  const [selectedLocation, setSelectedLocation] = useState<{ address: string; lat: number; lng: number } | null>(null);
   
   const form = useForm<CreateInvitationInput>({
     resolver: zodResolver(createInvitationSchema),
@@ -50,10 +53,12 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
 
     createInvitation.mutate({
       ...data,
+      venue: selectedLocation?.address || data.venue,
       owner_id: user.id,
     }, {
       onSuccess: () => {
         form.reset();
+        setSelectedLocation(null);
         onSuccess?.();
       }
     });
@@ -113,11 +118,24 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
                     <Input
                       placeholder="Contoh: GOR Senayan, Lapangan Futsal ABC"
                       {...field}
+                      value={selectedLocation?.address || field.value}
+                      onChange={(e) => {
+                        field.onChange(e);
+                        if (!selectedLocation) {
+                          // Only update if no location is selected from map
+                        }
+                      }}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
+            />
+
+            {/* Map Picker */}
+            <MapPicker
+              onLocationSelect={setSelectedLocation}
+              initialLocation={selectedLocation || undefined}
             />
 
             <div className="grid grid-cols-2 gap-4">
