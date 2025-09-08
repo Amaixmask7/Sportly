@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateInvitationForm } from '@/components/CreateInvitationForm';
@@ -14,6 +15,7 @@ import { LogOut, Plus, Users } from 'lucide-react';
 
 const Index = () => {
   const { user, signOut, loading: authLoading } = useAuth();
+  const queryClient = useQueryClient();
   const {
     invitations,
     isLoading,
@@ -51,6 +53,8 @@ const Index = () => {
           if (data.session) {
             // Successfully authenticated, clear the hash
             window.history.replaceState({}, document.title, window.location.pathname);
+            // Invalidate queries to refresh data
+            queryClient.invalidateQueries();
           }
         } catch (error) {
           console.error('OAuth redirect error:', error);
@@ -59,7 +63,15 @@ const Index = () => {
     };
 
     handleOAuthRedirect();
-  }, []);
+  }, [queryClient]);
+
+  // Handle page refresh - invalidate queries when user changes
+  useEffect(() => {
+    if (!authLoading) {
+      // Invalidate all queries when auth state changes (including on refresh)
+      queryClient.invalidateQueries();
+    }
+  }, [user, authLoading, queryClient]);
 
   const handleJoin = async (invitationId: string, capacity: number) => {
     if (!user) return;
@@ -150,7 +162,12 @@ const Index = () => {
               selectedDateRange={selectedDateRange}
             />
 
-            {authLoading || isLoading ? (
+            {authLoading ? (
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Memuat data...</p>
+              </div>
+            ) : isLoading ? (
               <SkeletonCardGrid count={6} />
             ) : error ? (
               <div className="text-center py-12">

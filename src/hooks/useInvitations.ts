@@ -38,6 +38,11 @@ export const useInvitations = () => {
       return data || [];
     },
     refetchInterval: 30000, // Refetch every 30 seconds
+    refetchOnMount: true, // Always refetch on mount (including refresh)
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    staleTime: 1000 * 60 * 2, // 2 minutes (reduced for better refresh)
+    retry: 3, // Retry failed requests
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
   });
 };
 

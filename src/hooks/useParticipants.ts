@@ -24,6 +24,10 @@ export const useParticipantCounts = (invitationIds: string[]) => {
     },
     enabled: invitationIds.length > 0,
     refetchInterval: 30000,
+    refetchOnMount: true, // Always refetch on mount (including refresh)
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    staleTime: 1000 * 60 * 2, // 2 minutes (reduced for better refresh)
+    retry: 3, // Retry failed requests
   });
 };
 
@@ -50,6 +54,10 @@ export const useUserParticipation = (userId: string | undefined, invitationIds: 
     },
     enabled: !!userId && invitationIds.length > 0,
     refetchInterval: 30000,
+    refetchOnMount: true, // Always refetch on mount (including refresh)
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    staleTime: 1000 * 60 * 2, // 2 minutes (reduced for better refresh)
+    retry: 3, // Retry failed requests
   });
 };
 
