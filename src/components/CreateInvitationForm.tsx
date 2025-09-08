@@ -1,35 +1,24 @@
-import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from '@/hooks/use-toast';
+import { useSports } from '@/hooks/useSports';
+import { useCreateInvitation } from '@/hooks/useInvitations';
 import { createInvitationSchema, type CreateInvitationInput } from '@/schemas/invitation';
-
-interface Sport {
-  id: string;
-  Sport_name: string;
-  Slug: string;
-  Min_participants: number;
-  Max_participants: number;
-}
 
 interface CreateInvitationFormProps {
   onSuccess?: () => void;
 }
 
 export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) => {
-  const [sports, setSports] = useState<Sport[]>([]);
-  const [loading, setLoading] = useState(false);
-  
   const { user } = useAuth();
+  const { data: sports = [], isLoading: sportsLoading } = useSports();
+  const createInvitation = useCreateInvitation();
   
   const form = useForm<CreateInvitationInput>({
     resolver: zodResolver(createInvitationSchema),
@@ -43,24 +32,6 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
     }
   });
 
-  useEffect(() => {
-    fetchSports();
-  }, []);
-
-  const fetchSports = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('Sports')
-        .select('*')
-        .eq('is_active', true);
-      
-      if (error) throw error;
-      setSports(data || []);
-    } catch (error) {
-      console.error('Error fetching sports:', error);
-    }
-  };
-
   const onSubmit = async (data: CreateInvitationInput) => {
     if (!user) return;
     
@@ -70,44 +41,22 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
       const min = selected.Min_participants || 1;
       const max = selected.Max_participants || 100;
       if (data.capacity < min || data.capacity > max) {
-        toast({ 
-          title: 'Validasi', 
-          description: `Jumlah partisipan harus antara ${min}-${max}.`, 
-          variant: 'destructive' 
+        form.setError('capacity', {
+          message: `Jumlah partisipan harus antara ${min}-${max}.`
         });
         return;
       }
     }
 
-    setLoading(true);
-    
-    try {
-      const { error } = await supabase
-        .from('Invitation')
-        .insert({
-          ...data,
-          owner_id: user.id,
-          start_at: new Date(data.start_at).toISOString(),
-        });
-
-      if (error) throw error;
-
-      toast({
-        title: "Success!",
-        description: "Invitation berhasil dibuat. Menunggu teman bergabung!",
-      });
-
-      form.reset();
-      onSuccess?.();
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
+    createInvitation.mutate({
+      ...data,
+      owner_id: user.id,
+    }, {
+      onSuccess: () => {
+        form.reset();
+        onSuccess?.();
+      }
+    });
   };
 
   const selectedSport = sports.find(s => s.id === form.watch('sport_id'));
@@ -254,8 +203,8 @@ export const CreateInvitationForm = ({ onSuccess }: CreateInvitationFormProps) =
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Membuat...' : 'Buat Ajakan'}
+            <Button type="submit" className="w-full" disabled={createInvitation.isPending || sportsLoading}>
+              {createInvitation.isPending ? 'Membuat...' : 'Buat Ajakan'}
             </Button>
           </form>
         </Form>
