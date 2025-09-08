@@ -11,7 +11,7 @@ import { useParticipantCounts, useUserParticipation, useJoinInvitation, useLeave
 import { LogOut, Plus, Users } from 'lucide-react';
 
 const Index = () => {
-  const { user, signOut } = useAuth();
+  const { user, signOut, loading: authLoading } = useAuth();
   const {
     invitations,
     isLoading,
@@ -121,11 +121,18 @@ const Index = () => {
               selectedDateRange={selectedDateRange}
             />
 
-            {isLoading ? (
+            {authLoading || isLoading ? (
               <SkeletonCardGrid count={6} />
             ) : error ? (
               <div className="text-center py-12">
                 <p className="text-red-500">Error memuat data: {error.message}</p>
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => window.location.reload()}
+                >
+                  Refresh Halaman
+                </Button>
               </div>
             ) : invitations.length === 0 ? (
               <div className="text-center py-12">
