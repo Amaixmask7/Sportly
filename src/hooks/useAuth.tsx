@@ -7,9 +7,9 @@ import { toast } from '@/hooks/use-toast';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
-  signUp: (email: string, password: string, displayName: string) => Promise<{ error: any }>;
-  signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signInWithGoogle: () => Promise<{ error: any | null }>;
+  signUp: (email: string, password: string, displayName: string) => Promise<{ error: Error | null }>;
+  signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
+  signInWithGoogle: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   loading: boolean;
 }
@@ -59,7 +59,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [queryClient]);
 
   const createUserProfile = async (user: User) => {
     try {
@@ -171,7 +171,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signInWithGoogle = async () => {
     try {
-      const redirectUrl = `${window.location.origin}/auth/callback`;
+      // For development with IP address, we need to handle the redirect differently
+      const isLocalIP = window.location.hostname.match(/^\d+\.\d+\.\d+\.\d+$/);
+      const redirectUrl = isLocalIP 
+        ? `${window.location.origin}/`  // Redirect to home for IP addresses
+        : `${window.location.origin}/auth/callback`;  // Use callback for proper domains
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -186,9 +191,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         toast({ title: 'Error', description: error.message, variant: 'destructive' });
       }
       return { error };
-    } catch (error: any) {
-      toast({ title: 'Error', description: error.message, variant: 'destructive' });
-      return { error };
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+      toast({ title: 'Error', description: errorMessage, variant: 'destructive' });
+      return { error: error instanceof Error ? error : new Error(errorMessage) };
     }
   };
 

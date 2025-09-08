@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CreateInvitationForm } from '@/components/CreateInvitationForm';
@@ -8,6 +9,7 @@ import { SkeletonCardGrid } from '@/components/SkeletonCard';
 import { useAuth } from '@/hooks/useAuth';
 import { useInvitationFilters } from '@/hooks/useInvitationFilters';
 import { useParticipantCounts, useUserParticipation, useJoinInvitation, useLeaveInvitation } from '@/hooks/useParticipants';
+import { supabase } from '@/integrations/supabase/client';
 import { LogOut, Plus, Users } from 'lucide-react';
 
 const Index = () => {
@@ -31,6 +33,33 @@ const Index = () => {
   const invitationIds = invitations.map(inv => inv.id);
   const { data: participantCounts = {} } = useParticipantCounts(invitationIds);
   const { data: joinedMap = {} } = useUserParticipation(user?.id, invitationIds);
+
+  // Handle OAuth redirect from home page (for IP addresses)
+  useEffect(() => {
+    const handleOAuthRedirect = async () => {
+      // Check if we're on a redirect from OAuth (has hash with auth data)
+      if (window.location.hash.includes('access_token') || window.location.hash.includes('error')) {
+        try {
+          // Get the session from URL hash
+          const { data, error } = await supabase.auth.getSession();
+          
+          if (error) {
+            console.error('Error getting session:', error);
+            return;
+          }
+
+          if (data.session) {
+            // Successfully authenticated, clear the hash
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (error) {
+          console.error('OAuth redirect error:', error);
+        }
+      }
+    };
+
+    handleOAuthRedirect();
+  }, []);
 
   const handleJoin = async (invitationId: string, capacity: number) => {
     if (!user) return;
