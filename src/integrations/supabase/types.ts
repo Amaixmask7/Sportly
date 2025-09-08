@@ -128,6 +128,48 @@ export type Database = {
           }
         ]
       }
+      InvitationComment: {
+        Row: {
+          id: string
+          invitation_id: string
+          user_id: string
+          content: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invitation_id: string
+          user_id: string
+          content: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          invitation_id?: string
+          user_id?: string
+          content?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "InvitationComment_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "Invitation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "InvitationComment_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "Customer"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       Sports: {
         Row: {
           created_at: string

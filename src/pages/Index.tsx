@@ -64,6 +64,12 @@ const Index = () => {
             <div className="flex items-center gap-4">
               {user ? (
                 <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/profile">
+                      <Users className="h-4 w-4 mr-2" />
+                      Profil
+                    </Link>
+                  </Button>
                   <span className="text-sm text-muted-foreground">
                     Halo, {user.user_metadata?.display_name || user.email}
                   </span>
