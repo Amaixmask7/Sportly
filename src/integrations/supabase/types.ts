@@ -170,6 +170,64 @@ export type Database = {
           }
         ]
       }
+      UserRating: {
+        Row: {
+          id: string
+          invitation_id: string
+          rater_id: string
+          rated_user_id: string
+          rating: number
+          comment: string | null
+          would_play_again: boolean | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          invitation_id: string
+          rater_id: string
+          rated_user_id: string
+          rating: number
+          comment?: string | null
+          would_play_again?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          invitation_id?: string
+          rater_id?: string
+          rated_user_id?: string
+          rating?: number
+          comment?: string | null
+          would_play_again?: boolean | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "UserRating_invitation_id_fkey"
+            columns: ["invitation_id"]
+            isOneToOne: false
+            referencedRelation: "Invitation"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "UserRating_rater_id_fkey"
+            columns: ["rater_id"]
+            isOneToOne: false
+            referencedRelation: "Customer"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "UserRating_rated_user_id_fkey"
+            columns: ["rated_user_id"]
+            isOneToOne: false
+            referencedRelation: "Customer"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       Sports: {
         Row: {
           created_at: string
