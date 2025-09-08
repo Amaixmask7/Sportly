@@ -23,10 +23,49 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    let mounted = true;
+
+    // Check for existing session first
+    const initializeAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (mounted) {
+          if (error) {
+            console.error('Error getting session:', error);
+            setUser(null);
+            setSession(null);
+          } else {
+            setSession(session);
+            setUser(session?.user ?? null);
+            
+            // Ensure customer profile exists for existing session
+            if (session?.user) {
+              try {
+                await upsertUserProfile(session.user);
+              } catch (err) {
+                console.error('Error ensuring user profile:', err);
+              }
+            }
+          }
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setUser(null);
+          setSession(null);
+          setLoading(false);
+        }
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         console.log('Auth state change:', event, session?.user?.id);
+        
+        if (!mounted) return;
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -51,14 +90,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    // Initialize auth state
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
   }, [queryClient]);
 
   const createUserProfile = async (user: User) => {
