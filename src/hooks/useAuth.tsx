@@ -23,16 +23,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         setLoading(false);
         
-        // Create profile if new user signs up
-        if (event === 'SIGNED_IN' && session?.user && !session.user.email_confirmed_at) {
-          setTimeout(() => {
-            createUserProfile(session.user);
-          }, 0);
+        // Ensure customer profile exists for any successful sign-in
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            await upsertUserProfile(session.user);
+          } catch (err) {
+            console.error('Error ensuring user profile:', err);
+          }
         }
       }
     );
@@ -63,6 +65,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error('Error creating profile:', error);
     }
+  };
+
+  const upsertUserProfile = async (user: User) => {
+    const displayName = user.user_metadata?.display_name || user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const avatarUrl = user.user_metadata?.avatar_url || user.user_metadata?.picture || null;
+    const { error } = await supabase
+      .from('Customer')
+      .upsert({ id: user.id, display_name: displayName, avatar_url: avatarUrl }, { onConflict: 'id', ignoreDuplicates: false });
+    if (error) throw error;
   };
 
   const signUp = async (email: string, password: string, displayName: string) => {
