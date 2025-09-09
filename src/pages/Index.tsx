@@ -68,8 +68,10 @@ const Index = () => {
   // Handle page refresh - invalidate queries when user changes
   useEffect(() => {
     if (!authLoading) {
-      // Invalidate all queries when auth state changes (including on refresh)
-      queryClient.invalidateQueries();
+      // Only invalidate specific queries, not all queries
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      queryClient.invalidateQueries({ queryKey: ['participant-counts'] });
+      queryClient.invalidateQueries({ queryKey: ['user-participation'] });
     }
   }, [user, authLoading, queryClient]);
 
