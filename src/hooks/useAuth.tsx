@@ -69,13 +69,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         setSession(session);
         setUser(session?.user ?? null);
-        setLoading(false);
         
         // Handle sign out
         if (event === 'SIGNED_OUT') {
           setUser(null);
           setSession(null);
           queryClient.clear();
+          setLoading(false);
           return;
         }
         
@@ -87,6 +87,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error('Error ensuring user profile:', err);
           }
         }
+        
+        // Only set loading to false after handling the event
+        setLoading(false);
       }
     );
 

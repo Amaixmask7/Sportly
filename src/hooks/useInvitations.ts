@@ -23,19 +23,29 @@ export const useInvitations = () => {
   return useQuery({
     queryKey: ['invitations'],
     queryFn: async (): Promise<Invitation[]> => {
-      const { data, error } = await supabase
-        .from('Invitation')
-        .select(`
-          *,
-          Sports (Sport_name, Slug),
-          Customer (display_name)
-        `)
-        .eq('is_canceled', false)
-        .gte('start_at', new Date().toISOString())
-        .order('start_at', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('Invitation')
+          .select(`
+            *,
+            Sports (Sport_name, Slug),
+            Customer (display_name)
+          `)
+          .eq('is_canceled', false)
+          .gte('start_at', new Date().toISOString())
+          .order('start_at', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          console.error('Error fetching invitations:', error);
+          throw error;
+        }
+        
+        console.log('Successfully fetched invitations:', data?.length || 0);
+        return data || [];
+      } catch (error) {
+        console.error('Failed to fetch invitations:', error);
+        throw error;
+      }
     },
     refetchInterval: 30000, // Refetch every 30 seconds
     refetchOnMount: true, // Always refetch on mount (including refresh)

@@ -1,0 +1,10 @@
+[33m068599c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m)[m fix(refresh): resolve page refresh issues with loading state and cache
+[33mf83ac66[m fix(oauth): resolve IP address OAuth redirect issues
+[33mb5f9a4e[m fix(auth): resolve OAuth redirect, logout, and loading state issues
+[33m55baaaa[m feat(maps-rating-security): add Google Maps integration, rating system, and security improvements
+[33m2f09385[m feat(profile): add user profile, invitation management, and communication features
+[33mf74e3ff[m feat(ux): add skeleton loading, search & filter functionality, and performance optimizations
+[33m30f69b1[m feat(data): refactor Index.tsx to use React Query hooks for better data management and error handling
+[33m59131e7[m feat(data): add React Query hooks for invitations, participants, and sports; refactor CreateInvitationForm to use new hooks
+[33m53cb6c4[m feat(form): refactor CreateInvitationForm with React Hook Form + Zod validation
+[33mb01c898[m feat(error): add ErrorBoundary component with fallback UI and reset functionality
