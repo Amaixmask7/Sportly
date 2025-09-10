@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +16,7 @@ import { LogOut, Plus, Users } from 'lucide-react';
 const Index = () => {
   const { user, signOut, loading: authLoading } = useAuth();
   const queryClient = useQueryClient();
+  const isFirstRender = useRef(true);
   const {
     invitations,
     isLoading,
@@ -68,23 +69,38 @@ const Index = () => {
   // Handle data refresh when user authentication state changes
   useEffect(() => {
     if (!authLoading) {
-      // Only invalidate queries when user actually changes (not on initial load)
-      const hasUserChanged = user !== null;
+      // Always refresh invitations when auth state is ready
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
       
-      if (hasUserChanged) {
-        // Invalidate user-specific queries when user logs in
+      // Only handle user-specific queries if user exists
+      if (user) {
         queryClient.invalidateQueries({ queryKey: ['user-participation'] });
         queryClient.invalidateQueries({ queryKey: ['participant-counts'] });
       } else {
-        // Clear user-specific data when user logs out
+        // Clear user-specific data when no user
         queryClient.removeQueries({ queryKey: ['user-participation'] });
         queryClient.removeQueries({ queryKey: ['participant-counts'] });
       }
-      
-      // Always refresh invitations when auth state changes
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
     }
   }, [user, authLoading, queryClient]);
+
+  // Handle page refresh - ensure data is loaded
+  useEffect(() => {
+    if (!authLoading && !isLoading) {
+      // Skip first render to prevent unnecessary refetch
+      if (isFirstRender.current) {
+        isFirstRender.current = false;
+        return;
+      }
+      
+      // Force refetch data on page refresh
+      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      if (user) {
+        queryClient.invalidateQueries({ queryKey: ['user-participation'] });
+        queryClient.invalidateQueries({ queryKey: ['participant-counts'] });
+      }
+    }
+  }, [authLoading, isLoading, user, queryClient]);
 
   const handleJoin = async (invitationId: string, capacity: number) => {
     if (!user) return;
@@ -101,6 +117,17 @@ const Index = () => {
     if (!user) return;
     
     leaveInvitation.mutate({ invitationId, userId: user.id });
+  };
+
+  // Handle logout with proper cache clearing
+  const handleSignOut = async () => {
+    try {
+      // Clear all queries before signing out
+      queryClient.clear();
+      await signOut();
+    } catch (error) {
+      console.error('Error during sign out:', error);
+    }
   };
 
 
@@ -127,7 +154,7 @@ const Index = () => {
                   <span className="text-sm text-muted-foreground">
                     Halo, {user.user_metadata?.display_name || user.email}
                   </span>
-                  <Button variant="outline" size="sm" onClick={signOut}>
+                  <Button variant="outline" size="sm" onClick={handleSignOut}>
                     <LogOut className="h-4 w-4 mr-2" />
                     Keluar
                   </Button>
@@ -181,7 +208,10 @@ const Index = () => {
                 <p>Memuat autentikasi...</p>
               </div>
             ) : isLoading ? (
-              <SkeletonCardGrid count={6} />
+              <div className="text-center py-12">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p>Memuat data...</p>
+              </div>
             ) : error ? (
               <div className="text-center py-12">
                 <p className="text-red-500">Error memuat data: {error.message}</p>
