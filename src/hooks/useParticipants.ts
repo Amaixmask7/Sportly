@@ -23,11 +23,11 @@ export const useParticipantCounts = (invitationIds: string[]) => {
       return counts;
     },
     enabled: invitationIds.length > 0,
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Reduced frequency
     refetchOnMount: true, // Always refetch on mount (including refresh)
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    staleTime: 1000 * 60 * 2, // 2 minutes (reduced for better refresh)
-    retry: 3, // Retry failed requests
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    staleTime: 1000 * 60 * 5, // 5 minutes (increased for better performance)
+    retry: 2, // Reduced retry attempts
   });
 };
 
@@ -53,11 +53,11 @@ export const useUserParticipation = (userId: string | undefined, invitationIds: 
       return map;
     },
     enabled: !!userId && invitationIds.length > 0,
-    refetchInterval: 30000,
+    refetchInterval: 60000, // Reduced frequency
     refetchOnMount: true, // Always refetch on mount (including refresh)
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    staleTime: 1000 * 60 * 2, // 2 minutes (reduced for better refresh)
-    retry: 3, // Retry failed requests
+    refetchOnWindowFocus: false, // Disable refetch on window focus
+    staleTime: 1000 * 60 * 5, // 5 minutes (increased for better performance)
+    retry: 2, // Reduced retry attempts
   });
 };
 

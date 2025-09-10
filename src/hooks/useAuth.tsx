@@ -24,6 +24,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     let mounted = true;
+    let isInitialized = false;
 
     // Check for existing session first
     const initializeAuth = async () => {
@@ -48,6 +49,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               }
             }
           }
+          isInitialized = true;
           setLoading(false);
         }
       } catch (error) {
@@ -55,6 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (mounted) {
           setUser(null);
           setSession(null);
+          isInitialized = true;
           setLoading(false);
         }
       }
@@ -67,9 +70,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (!mounted) return;
         
-        setSession(session);
-        setUser(session?.user ?? null);
-        
         // Handle sign out
         if (event === 'SIGNED_OUT') {
           setUser(null);
@@ -78,6 +78,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           setLoading(false);
           return;
         }
+        
+        // Update state for other events
+        setSession(session);
+        setUser(session?.user ?? null);
         
         // Ensure customer profile exists for any successful sign-in
         if (event === 'SIGNED_IN' && session?.user) {
@@ -88,8 +92,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           }
         }
         
-        // Only set loading to false after handling the event
-        setLoading(false);
+        // Only set loading to false if we're not in the initial loading phase
+        if (isInitialized) {
+          setLoading(false);
+        }
       }
     );
 
@@ -183,6 +189,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signOut = async () => {
     try {
+      // Set loading to true to prevent UI flicker
+      setLoading(true);
+      
       // Clear all cached data
       setUser(null);
       setSession(null);
@@ -196,12 +205,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       // Clear localStorage
       localStorage.removeItem('sb-' + import.meta.env.VITE_SUPABASE_URL?.split('//')[1]?.split('.')[0] + '-auth-token');
       
+      // Ensure loading is false after sign out
+      setLoading(false);
+      
       toast({
         title: "Signed out",
         description: "You've been signed out successfully.",
       });
     } catch (error) {
       console.error('Error signing out:', error);
+      setLoading(false);
       toast({
         title: "Error",
         description: "Failed to sign out. Please try again.",

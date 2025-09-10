@@ -15,11 +15,11 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnMount: true,
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false, // Disable to prevent excessive refetching
       refetchOnReconnect: true,
-      staleTime: 1000 * 60 * 2, // 2 minutes
-      retry: 3,
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      staleTime: 1000 * 60 * 5, // 5 minutes (increased for better performance)
+      retry: 2, // Reduced retry attempts
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Faster retry
     },
   },
 });

@@ -47,12 +47,12 @@ export const useInvitations = () => {
         throw error;
       }
     },
-    refetchInterval: 30000, // Refetch every 30 seconds
+    refetchInterval: 60000, // Refetch every 60 seconds (reduced frequency)
     refetchOnMount: true, // Always refetch on mount (including refresh)
-    refetchOnWindowFocus: true, // Refetch when window gains focus
-    staleTime: 1000 * 60 * 2, // 2 minutes (reduced for better refresh)
-    retry: 3, // Retry failed requests
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    refetchOnWindowFocus: false, // Disable refetch on window focus to prevent excessive calls
+    staleTime: 1000 * 60 * 5, // 5 minutes (increased for better performance)
+    retry: 2, // Reduced retry attempts
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000), // Faster retry
   });
 };
 

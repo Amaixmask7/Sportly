@@ -65,13 +65,24 @@ const Index = () => {
     handleOAuthRedirect();
   }, [queryClient]);
 
-  // Handle page refresh - invalidate queries when user changes
+  // Handle data refresh when user authentication state changes
   useEffect(() => {
     if (!authLoading) {
-      // Only invalidate specific queries, not all queries
+      // Only invalidate queries when user actually changes (not on initial load)
+      const hasUserChanged = user !== null;
+      
+      if (hasUserChanged) {
+        // Invalidate user-specific queries when user logs in
+        queryClient.invalidateQueries({ queryKey: ['user-participation'] });
+        queryClient.invalidateQueries({ queryKey: ['participant-counts'] });
+      } else {
+        // Clear user-specific data when user logs out
+        queryClient.removeQueries({ queryKey: ['user-participation'] });
+        queryClient.removeQueries({ queryKey: ['participant-counts'] });
+      }
+      
+      // Always refresh invitations when auth state changes
       queryClient.invalidateQueries({ queryKey: ['invitations'] });
-      queryClient.invalidateQueries({ queryKey: ['participant-counts'] });
-      queryClient.invalidateQueries({ queryKey: ['user-participation'] });
     }
   }, [user, authLoading, queryClient]);
 
@@ -167,7 +178,7 @@ const Index = () => {
             {authLoading ? (
               <div className="text-center py-12">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p>Memuat data...</p>
+                <p>Memuat autentikasi...</p>
               </div>
             ) : isLoading ? (
               <SkeletonCardGrid count={6} />
