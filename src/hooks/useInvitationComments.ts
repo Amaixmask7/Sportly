@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-export const useInvitationComments = (invitationId: string) => {
+export const useInvitationComments = (invitationId: string, enabled: boolean = true) => {
   return useQuery({
     queryKey: ['invitation-comments', invitationId],
     queryFn: async () => {
@@ -27,7 +27,7 @@ export const useInvitationComments = (invitationId: string) => {
         return []; // Return empty array on catch
       }
     },
-    enabled: !!invitationId,
+    enabled: !!invitationId && enabled, // Only fetch when enabled
     retry: 1, // Reduce retry attempts
     retryDelay: 1000, // 1 second delay
     staleTime: 1000 * 60 * 5, // 5 minutes

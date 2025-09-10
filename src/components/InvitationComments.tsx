@@ -23,7 +23,7 @@ export const InvitationComments = ({ invitationId }: InvitationCommentsProps) =>
   const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const { data: comments = [], isLoading } = useInvitationComments(invitationId);
+  const { data: comments = [], isLoading } = useInvitationComments(invitationId, true);
   const addComment = useAddComment();
   
   const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentFormData>();

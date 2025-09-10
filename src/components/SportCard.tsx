@@ -2,8 +2,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { InvitationComments } from './InvitationComments';
-import { Calendar, Clock, MapPin, Users } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
+import { useState } from 'react';
 
 interface SportCardProps {
   invitation: {
@@ -40,6 +41,7 @@ const getSportColor = (slug: string) => {
 };
 
 export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, isJoined = false }: SportCardProps) => {
+  const [showComments, setShowComments] = useState(false);
   const startTime = new Date(invitation.start_at);
   const endTime = new Date(startTime.getTime() + (invitation.duration * 60 * 60 * 1000));
 
@@ -105,8 +107,22 @@ export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, i
         )}
       </CardContent>
       
-      {/* Comments Section */}
-      <InvitationComments invitationId={invitation.id} />
+      {/* Comments Section - Lazy Loading */}
+      <div className="border-t pt-3">
+        {showComments ? (
+          <InvitationComments invitationId={invitation.id} />
+        ) : (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="w-full text-muted-foreground hover:text-foreground"
+            onClick={() => setShowComments(true)}
+          >
+            <MessageSquare className="h-4 w-4 mr-2" />
+            Lihat Komentar
+          </Button>
+        )}
+      </div>
     </Card>
   );
 };
