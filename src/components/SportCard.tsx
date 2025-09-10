@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { InvitationPesan } from './InvitationComments';
+import { InvitationChat } from './InvitationChat';
 import { Calendar, Clock, MapPin, Users, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -41,7 +41,7 @@ const getSportColor = (slug: string) => {
 };
 
 export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, isJoined = false }: SportCardProps) => {
-  const [showComments, setShowComments] = useState(false);
+  const [showChat, setShowChat] = useState(false);
   const startTime = new Date(invitation.start_at);
   const endTime = new Date(startTime.getTime() + (invitation.duration * 60 * 60 * 1000));
 
@@ -107,19 +107,19 @@ export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, i
         )}
       </CardContent>
       
-      {/* Pesan Section - Lazy Loading */}
+      {/* Chat Section - Lazy Loading */}
       <div className="border-t pt-3">
-        {showComments ? (
-          <InvitationPesan invitationId={invitation.id} />
+        {showChat ? (
+          <InvitationChat invitationId={invitation.id} />
         ) : (
           <Button 
             variant="ghost" 
             size="sm" 
             className="w-full text-muted-foreground hover:text-foreground"
-            onClick={() => setShowComments(true)}
+            onClick={() => setShowChat(true)}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
-            Lihat Pesan
+            Lihat Chat
           </Button>
         )}
       </div>
