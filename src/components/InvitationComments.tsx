@@ -6,32 +6,32 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAuth } from '@/hooks/useAuth';
-import { useInvitationComments, useAddComment } from '@/hooks/useInvitationComments';
+import { useInvitationPesan, useAddPesan } from '@/hooks/useInvitationComments';
 import { MessageCircle, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
-interface InvitationCommentsProps {
+interface InvitationPesanProps {
   invitationId: string;
 }
 
-interface CommentFormData {
+interface PesanFormData {
   content: string;
 }
 
-export const InvitationComments = ({ invitationId }: InvitationCommentsProps) => {
+export const InvitationPesan = ({ invitationId }: InvitationPesanProps) => {
   const { user } = useAuth();
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const { data: comments = [], isLoading } = useInvitationComments(invitationId, true);
-  const addComment = useAddComment();
+  const { data: pesan = [], isLoading } = useInvitationPesan(invitationId, true);
+  const addPesan = useAddPesan();
   
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<CommentFormData>();
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<PesanFormData>();
 
-  const onSubmit = async (data: CommentFormData) => {
+  const onSubmit = async (data: PesanFormData) => {
     if (!user || !data.content.trim()) return;
     
-    addComment.mutate({
+    addPesan.mutate({
       invitation_id: invitationId,
       user_id: user.id,
       content: data.content.trim(),
@@ -53,42 +53,42 @@ export const InvitationComments = ({ invitationId }: InvitationCommentsProps) =>
           onClick={() => setIsExpanded(!isExpanded)}
         >
           <MessageCircle className="h-5 w-5" />
-          Komentar ({comments.length})
+          Pesan ({pesan.length})
         </CardTitle>
       </CardHeader>
       
       {isExpanded && (
         <CardContent className="space-y-4">
-          {/* Comments List */}
+          {/* Pesan List */}
           <ScrollArea className="h-64">
             {isLoading ? (
               <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">Memuat komentar...</p>
+                <p className="text-sm text-muted-foreground">Memuat pesan...</p>
               </div>
-            ) : comments.length === 0 ? (
+            ) : pesan.length === 0 ? (
               <div className="text-center py-4">
-                <p className="text-sm text-muted-foreground">Belum ada komentar.</p>
+                <p className="text-sm text-muted-foreground">Belum ada pesan.</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {comments.map((comment) => (
-                  <div key={comment.id} className="flex gap-3">
+                {pesan.map((pesanItem) => (
+                  <div key={pesanItem.id} className="flex gap-3">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={comment.Customer?.avatar_url} />
+                      <AvatarImage src={pesanItem.Customer?.avatar_url} />
                       <AvatarFallback className="text-xs">
-                        {comment.Customer?.display_name?.charAt(0).toUpperCase() || 'U'}
+                        {pesanItem.Customer?.display_name?.charAt(0).toUpperCase() || 'U'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">
-                          {comment.Customer?.display_name || 'User'}
+                          {pesanItem.Customer?.display_name || 'User'}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {format(new Date(comment.created_at), 'dd MMM HH:mm', { locale: id })}
+                          {format(new Date(pesanItem.created_at), 'dd MMM HH:mm', { locale: id })}
                         </span>
                       </div>
-                      <p className="text-sm">{comment.content}</p>
+                      <p className="text-sm">{pesanItem.content}</p>
                     </div>
                   </div>
                 ))}
@@ -96,7 +96,7 @@ export const InvitationComments = ({ invitationId }: InvitationCommentsProps) =>
             )}
           </ScrollArea>
 
-          {/* Add Comment Form */}
+          {/* Add Pesan Form */}
           {user && (
             <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
               <Avatar className="h-8 w-8">
@@ -107,8 +107,8 @@ export const InvitationComments = ({ invitationId }: InvitationCommentsProps) =>
               </Avatar>
               <div className="flex-1">
                 <Input
-                  placeholder="Tulis komentar..."
-                  {...register('content', { required: 'Komentar tidak boleh kosong' })}
+                  placeholder="Tulis pesan..."
+                  {...register('content', { required: 'Pesan tidak boleh kosong' })}
                   className={errors.content ? 'border-red-500' : ''}
                 />
                 {errors.content && (
@@ -118,7 +118,7 @@ export const InvitationComments = ({ invitationId }: InvitationCommentsProps) =>
               <Button 
                 type="submit" 
                 size="sm" 
-                disabled={addComment.isPending}
+                disabled={addPesan.isPending}
               >
                 <Send className="h-4 w-4" />
               </Button>

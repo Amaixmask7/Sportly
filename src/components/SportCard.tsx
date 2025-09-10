@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { InvitationComments } from './InvitationComments';
+import { InvitationPesan } from './InvitationComments';
 import { Calendar, Clock, MapPin, Users, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { useState } from 'react';
@@ -107,10 +107,10 @@ export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, i
         )}
       </CardContent>
       
-      {/* Comments Section - Lazy Loading */}
+      {/* Pesan Section - Lazy Loading */}
       <div className="border-t pt-3">
         {showComments ? (
-          <InvitationComments invitationId={invitation.id} />
+          <InvitationPesan invitationId={invitation.id} />
         ) : (
           <Button 
             variant="ghost" 
@@ -119,7 +119,7 @@ export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, i
             onClick={() => setShowComments(true)}
           >
             <MessageSquare className="h-4 w-4 mr-2" />
-            Lihat Komentar
+            Lihat Pesan
           </Button>
         )}
       </div>

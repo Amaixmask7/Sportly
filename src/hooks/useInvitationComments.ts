@@ -2,9 +2,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from '@/hooks/use-toast';
 
-export const useInvitationComments = (invitationId: string, enabled: boolean = true) => {
+export const useInvitationPesan = (invitationId: string, enabled: boolean = true) => {
   return useQuery({
-    queryKey: ['invitation-comments', invitationId],
+    queryKey: ['invitation-pesan', invitationId],
     queryFn: async () => {
       try {
         const { data, error } = await supabase
@@ -17,13 +17,13 @@ export const useInvitationComments = (invitationId: string, enabled: boolean = t
           .order('created_at', { ascending: true });
 
         if (error) {
-          console.error('Error fetching comments:', error);
+          console.error('Error fetching pesan:', error);
           return []; // Return empty array on error
         }
         
         return data || [];
       } catch (error) {
-        console.error('Failed to fetch comments:', error);
+        console.error('Failed to fetch pesan:', error);
         return []; // Return empty array on catch
       }
     },
@@ -36,7 +36,7 @@ export const useInvitationComments = (invitationId: string, enabled: boolean = t
   });
 };
 
-export const useAddComment = () => {
+export const useAddPesan = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
@@ -53,11 +53,11 @@ export const useAddComment = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ 
-        queryKey: ['invitation-comments', variables.invitation_id] 
+        queryKey: ['invitation-pesan', variables.invitation_id] 
       });
       toast({
-        title: "Komentar ditambahkan",
-        description: "Komentar Anda berhasil ditambahkan.",
+        title: "Pesan dikirim",
+        description: "Pesan Anda berhasil dikirim.",
       });
     },
     onError: (error: Error) => {
