@@ -106,7 +106,7 @@ export const SportCard = ({ invitation, onJoin, onLeave, participantCount = 0, i
       </CardContent>
       
       {/* Comments Section */}
-      {/* <InvitationComments invitationId={invitation.id} /> */}
+      <InvitationComments invitationId={invitation.id} />
     </Card>
   );
 };

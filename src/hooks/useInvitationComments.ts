@@ -6,20 +6,33 @@ export const useInvitationComments = (invitationId: string) => {
   return useQuery({
     queryKey: ['invitation-comments', invitationId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('InvitationComment')
-        .select(`
-          *,
-          Customer (display_name, avatar_url)
-        `)
-        .eq('invitation_id', invitationId)
-        .order('created_at', { ascending: true });
+      try {
+        const { data, error } = await supabase
+          .from('InvitationComment')
+          .select(`
+            *,
+            Customer (display_name, avatar_url)
+          `)
+          .eq('invitation_id', invitationId)
+          .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      return data || [];
+        if (error) {
+          console.error('Error fetching comments:', error);
+          return []; // Return empty array on error
+        }
+        
+        return data || [];
+      } catch (error) {
+        console.error('Failed to fetch comments:', error);
+        return []; // Return empty array on catch
+      }
     },
     enabled: !!invitationId,
-    refetchInterval: 10000, // Refetch every 10 seconds for real-time feel
+    retry: 1, // Reduce retry attempts
+    retryDelay: 1000, // 1 second delay
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchInterval: false, // Disable auto refetch to prevent infinite loop
+    refetchOnWindowFocus: false, // Disable refetch on window focus
   });
 };
 
@@ -47,7 +60,7 @@ export const useAddComment = () => {
         description: "Komentar Anda berhasil ditambahkan.",
       });
     },
-    onError: (error: any) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
         description: error.message,
